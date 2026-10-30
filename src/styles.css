@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #efe4cf;
+  --color-ink: #1c1916;
+  --color-bone: #f7f2e8;
+  --color-signal: #e23b28;
+  --font-display: "Teko", "Arial Narrow", sans-serif;
+  --font-sans: "Outfit", system-ui, sans-serif;
+  --radius: 0.85rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-sans);
+  }
+}
+
+.hook {
+  min-height: 100dvh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-ink);
+  color: var(--color-bone);
+}
+
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.7rem 1rem 0.35rem;
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-signal);
+}
+
+.word {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 2.4rem;
+  line-height: 0.85;
+  letter-spacing: 0.02em;
+  color: var(--color-paper);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.hud-num {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.55rem;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: var(--color-bone);
+}
+
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--color-bone) 28%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-bone);
+}
+
+.icon-btn:hover {
+  border-color: var(--color-paper);
+}
+
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  margin: 0 0.7rem;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--color-ink);
+  touch-action: none;
+}
+
+.stage canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.veil {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 1.25rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--color-ink) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.veil h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 0.9;
+  letter-spacing: 0.02em;
+  color: var(--color-paper);
+}
+
+.veil p {
+  margin: 0 0 0.4rem;
+  max-width: 22rem;
+  color: var(--color-bone);
+  line-height: 1.45;
+}
+
+.btn {
+  min-height: 48px;
+  padding: 0.7rem 1.15rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--color-signal);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.btn.ghost {
+  background: transparent;
+  color: var(--color-paper);
+  border: 1px solid color-mix(in srgb, var(--color-bone) 40%, transparent);
+}
+
+.hook .veil a.btn {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.keys {
+  margin: 0;
+  padding: 0.55rem 1rem calc(0.7rem + env(safe-area-inset-bottom));
+  font-size: 0.92rem;
+  color: color-mix(in srgb, var(--color-bone) 78%, transparent);
+}
