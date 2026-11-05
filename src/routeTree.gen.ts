@@ -10,33 +10,70 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiRazorpayCheckRouteImport } from './routes/api/razorpay/check'
+import { Route as ApiRazorpayOrderRouteImport } from './routes/api/razorpay/order'
+import { Route as ApiRazorpayVerifyRouteImport } from './routes/api/razorpay/verify'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRazorpayCheckRoute = ApiRazorpayCheckRouteImport.update({
+  id: '/api/razorpay/check',
+  path: '/api/razorpay/check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRazorpayOrderRoute = ApiRazorpayOrderRouteImport.update({
+  id: '/api/razorpay/order',
+  path: '/api/razorpay/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiRazorpayVerifyRoute = ApiRazorpayVerifyRouteImport.update({
+  id: '/api/razorpay/verify',
+  path: '/api/razorpay/verify',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/razorpay/check': typeof ApiRazorpayCheckRoute
+  '/api/razorpay/order': typeof ApiRazorpayOrderRoute
+  '/api/razorpay/verify': typeof ApiRazorpayVerifyRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/razorpay/check': typeof ApiRazorpayCheckRoute
+  '/api/razorpay/order': typeof ApiRazorpayOrderRoute
+  '/api/razorpay/verify': typeof ApiRazorpayVerifyRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/razorpay/check': typeof ApiRazorpayCheckRoute
+  '/api/razorpay/order': typeof ApiRazorpayOrderRoute
+  '/api/razorpay/verify': typeof ApiRazorpayVerifyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/api/razorpay/check' | '/api/razorpay/order' | '/api/razorpay/verify'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/api/razorpay/check' | '/api/razorpay/order' | '/api/razorpay/verify'
+  id:
+    | '__root__'
+    | '/'
+    | '/api/razorpay/check'
+    | '/api/razorpay/order'
+    | '/api/razorpay/verify'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiRazorpayCheckRoute: typeof ApiRazorpayCheckRoute
+  ApiRazorpayOrderRoute: typeof ApiRazorpayOrderRoute
+  ApiRazorpayVerifyRoute: typeof ApiRazorpayVerifyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +85,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/razorpay/check': {
+      id: '/api/razorpay/check'
+      path: '/api/razorpay/check'
+      fullPath: '/api/razorpay/check'
+      preLoaderRoute: typeof ApiRazorpayCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/razorpay/order': {
+      id: '/api/razorpay/order'
+      path: '/api/razorpay/order'
+      fullPath: '/api/razorpay/order'
+      preLoaderRoute: typeof ApiRazorpayOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/razorpay/verify': {
+      id: '/api/razorpay/verify'
+      path: '/api/razorpay/verify'
+      fullPath: '/api/razorpay/verify'
+      preLoaderRoute: typeof ApiRazorpayVerifyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiRazorpayCheckRoute: ApiRazorpayCheckRoute,
+  ApiRazorpayOrderRoute: ApiRazorpayOrderRoute,
+  ApiRazorpayVerifyRoute: ApiRazorpayVerifyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
