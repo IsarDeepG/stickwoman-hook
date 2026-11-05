@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { optionsResponse, withCors } from "@/lib/razorpay-cors";
 import {
   getRazorpayCredentials,
   json,
@@ -23,22 +24,26 @@ async function handleCheck(request: Request): Promise<Response> {
   const creds = getRazorpayCredentials();
   if (!creds) {
     // Fail closed: without keys we cannot validate a token.
-    return json({ paid: false, error: "payments_not_configured" }, 503);
+    return withCors(request, json({ paid: false, error: "payments_not_configured" }, 503));
   }
   const token = await readToken(request);
   if (!token) {
-    return json({ paid: false, error: "missing_token" }, 400);
+    return withCors(request, json({ paid: false, error: "missing_token" }, 400));
   }
   const payload = parseUnlockToken(token, unlockSigningSecret(creds));
   if (!payload) {
-    return json({ paid: false });
+    return withCors(request, json({ paid: false }));
   }
-  return json({ paid: true, paymentId: payload.paymentId, orderId: payload.orderId });
+  return withCors(
+    request,
+    json({ paid: true, paymentId: payload.paymentId, orderId: payload.orderId }),
+  );
 }
 
 export const Route = createFileRoute("/api/razorpay/check")({
   server: {
     handlers: {
+      OPTIONS: async ({ request }) => optionsResponse(request),
       GET: async ({ request }) => handleCheck(request),
       POST: async ({ request }) => handleCheck(request),
     },

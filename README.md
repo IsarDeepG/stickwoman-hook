@@ -37,3 +37,11 @@ On load the game re-validates that token via `/api/razorpay/check`.
 
 The old `https://rzp.io/rzp/UJz1A1g` payment link is single-use and
 customer-bound; it is no longer used.
+
+## itch.io static build
+
+The HTML5 zip calls this deployment for payments. Set
+`VITE_API_BASE=https://stickwoman-hook.vercel.app` when building the static
+bundle so `/api/razorpay/*` hits this server. The payment routes allow CORS from
+`*.itch.io`, `*.itch.zone`, `html-classic.itch.zone`, and `*.hwcdn.net`.
+Unlock state stays in `localStorage` (`hook-unlock-token`); no cookies required.

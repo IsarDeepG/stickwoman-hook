@@ -13,6 +13,20 @@ export const UNLOCK_TOKEN_KEY = "hook-unlock-token";
 /** Legacy flag — ignored for unlock; cleared when a real token is stored. */
 export const LEGACY_PAID_KEY = "hook-paid";
 
+/**
+ * Optional absolute API origin for static/itch embeds.
+ * Empty (default) keeps same-origin relative paths for the Vercel app itself.
+ * Example for itch.zip: VITE_API_BASE=https://stickwoman-hook.vercel.app
+ */
+const API_BASE = String(import.meta.env.VITE_API_BASE ?? "")
+  .trim()
+  .replace(/\/$/, "");
+
+function apiUrl(path: string): string {
+  if (!API_BASE) return path;
+  return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
+}
+
 export type OrderResponse = {
   orderId: string;
   amount: number;
@@ -88,7 +102,7 @@ export function loadRazorpayCheckout(): Promise<void> {
 export async function createUnlockOrder(): Promise<PayStartResult> {
   let res: Response;
   try {
-    res = await fetch("/api/razorpay/order", { method: "POST" });
+    res = await fetch(apiUrl("/api/razorpay/order"), { method: "POST" });
   } catch {
     return { ok: false, kind: "failed", message: "Network error creating order." };
   }
@@ -116,7 +130,7 @@ export async function verifyUnlockPayment(input: {
 }): Promise<VerifyResult> {
   let res: Response;
   try {
-    res = await fetch("/api/razorpay/verify", {
+    res = await fetch(apiUrl("/api/razorpay/verify"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),
@@ -141,7 +155,7 @@ export async function verifyUnlockPayment(input: {
 
 export async function checkUnlockToken(token: string): Promise<boolean> {
   try {
-    const res = await fetch("/api/razorpay/check", {
+    const res = await fetch(apiUrl("/api/razorpay/check"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
