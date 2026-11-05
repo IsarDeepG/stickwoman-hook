@@ -2,7 +2,15 @@ import { useEffect, useRef, useState } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { isMuted, resumeAudio, setMuted, sfx, unlockAudio } from "@/games/audio";
 import { palette, VH, VW } from "@/games/palette";
-import { RAZORPAY_LABEL, RAZORPAY_URL } from "@/games/pay";
+import {
+  RAZORPAY_LABEL,
+  checkUnlockToken,
+  createUnlockOrder,
+  openRazorpayCheckout,
+  readStoredUnlockToken,
+  storeUnlockToken,
+  verifyUnlockPayment,
+} from "@/games/pay";
 
 type HookPt = { x: number; y: number; amp: number; speed: number };
 type Spring = { x: number; y: number };
@@ -392,24 +400,46 @@ export function HookGame() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const runRef = useRef<Run>(fresh(0, 0));
   const holdRef = useRef(false);
+  const unlockedRef = useRef(false);
   const [hud, setHud] = useState("First swing");
   const [runs, setRuns] = useState(0);
   const [pay, setPay] = useState(false);
   const [muted, setMute] = useState(false);
   const [banner, setBanner] = useState("");
+  const [payStatus, setPayStatus] = useState<
+    "idle" | "loading" | "not_configured" | "failed" | "verifying"
+  >("idle");
+  const [payMessage, setPayMessage] = useState("");
 
   useEffect(() => {
-    const paid = localStorage.getItem("hook-paid") === "1";
+    let cancelled = false;
     const seen = Number(localStorage.getItem("hook-runs") || "0");
     setRuns(seen);
-    if (!paid && seen >= 2) setPay(true);
     setMute(localStorage.getItem("hook-mute") === "1");
     setMuted(localStorage.getItem("hook-mute") === "1");
+    // Legacy hook-paid=1 must not unlock — only a verified token does.
+    localStorage.removeItem("hook-paid");
+
+    void (async () => {
+      const token = readStoredUnlockToken();
+      let unlocked = false;
+      if (token) {
+        unlocked = await checkUnlockToken(token);
+        if (!unlocked) localStorage.removeItem("hook-unlock-token");
+      }
+      if (cancelled) return;
+      unlockedRef.current = unlocked;
+      if (!unlocked && seen >= 2) setPay(true);
+    })();
+
     const onVis = () => {
       if (document.visibilityState === "visible") resumeAudio();
     };
     document.addEventListener("visibilitychange", onVis);
-    return () => document.removeEventListener("visibilitychange", onVis);
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, []);
 
   useEffect(() => {
@@ -462,7 +492,7 @@ export function HookGame() {
         localStorage.setItem("hook-runs", String(nextRuns));
         setRuns(nextRuns);
         setBanner(run.over === "bell" ? "Bell." : "Missed the line.");
-        if (localStorage.getItem("hook-paid") !== "1" && nextRuns >= 2) setPay(true);
+        if (!unlockedRef.current && nextRuns >= 2) setPay(true);
       }
       raf = requestAnimationFrame(loop);
     };
@@ -476,11 +506,52 @@ export function HookGame() {
   function again() {
     unlockAudio();
     const run = runRef.current;
-    const next = !pay && run.over === "bell" && run.course < COURSES.length - 1 ? run.course + 1 : run.course;
-    runRef.current = fresh(pay ? 0 : next, run.best);
+    const gate = pay && !unlockedRef.current;
+    const next = !gate && run.over === "bell" && run.course < COURSES.length - 1 ? run.course + 1 : run.course;
+    runRef.current = fresh(gate ? 0 : next, run.best);
     holdRef.current = false;
     setBanner("");
     setPay(false);
+    setPayStatus("idle");
+    setPayMessage("");
+  }
+
+  async function startPay() {
+    unlockAudio();
+    setPayStatus("loading");
+    setPayMessage("");
+    const started = await createUnlockOrder();
+    if (!started.ok) {
+      setPayStatus(started.kind === "not_configured" ? "not_configured" : "failed");
+      setPayMessage(started.message);
+      return;
+    }
+    let checkout;
+    try {
+      checkout = await openRazorpayCheckout(started.order);
+    } catch {
+      setPayStatus("failed");
+      setPayMessage("Payment failed, try again.");
+      return;
+    }
+    if (!checkout) {
+      setPayStatus("idle");
+      setPayMessage("");
+      return;
+    }
+    setPayStatus("verifying");
+    const verified = await verifyUnlockPayment(checkout);
+    if (!verified.ok) {
+      setPayStatus("failed");
+      setPayMessage(verified.message || "Payment failed, try again.");
+      return;
+    }
+    storeUnlockToken(verified.token);
+    unlockedRef.current = true;
+    setPay(false);
+    setPayStatus("idle");
+    setPayMessage("");
+    setBanner("Unlocked.");
   }
 
   return (
@@ -526,16 +597,26 @@ export function HookGame() {
         {pay ? (
           <div className="veil">
             <h3>Two swings</h3>
-            <p>The next lines unlock on Razorpay. {RAZORPAY_LABEL}.</p>
-            <a
+            <p>The next lines unlock with Razorpay Checkout. {RAZORPAY_LABEL}.</p>
+            {payStatus === "not_configured" ? (
+              <p className="pay-msg">Payments aren&apos;t configured.</p>
+            ) : payMessage ? (
+              <p className="pay-msg">{payMessage}</p>
+            ) : null}
+            <button
+              type="button"
               className="btn"
-              href={RAZORPAY_URL}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => localStorage.setItem("hook-paid", "1")}
+              disabled={payStatus === "loading" || payStatus === "verifying"}
+              onClick={() => {
+                void startPay();
+              }}
             >
-              Pay on Razorpay
-            </a>
+              {payStatus === "loading"
+                ? "Starting…"
+                : payStatus === "verifying"
+                  ? "Confirming…"
+                  : `Pay ${RAZORPAY_LABEL}`}
+            </button>
             <button type="button" className="btn ghost" onClick={again}>
               Swing the first two again
             </button>
